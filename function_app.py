@@ -1,34 +1,49 @@
-import azure.functions as func
-import logging
-import os
 
-# from http_echo import bp as http_echo_bp
-# from http_processa import bp as http_processa_bp
-# from timer_chama_outra_function import bp as timer_chama_bp
+import logging
+import azure.functions as func
+import os
+import pyodbc
 
 app = func.FunctionApp()
-
-
-@app.timer_trigger(
-    schedule="0 * * * * *",
-    arg_name="myTimer",
-    run_on_startup=False,
-    use_monitor=False,
-)
-def timer_log_simples(myTimer: func.TimerRequest) -> None:
+@app.timer_trigger(schedule="0 * * * * *", arg_name="myTimer", run_on_startup=False,
+              use_monitor=False) 
+def extract_chamada(myTimer: func.TimerRequest) -> None:
     
-    usuario = os.getenv('USER')
-    database = os.getenv('DATABASE')
-    host = os.getenv('HOST')
-    password = os.getenv('PASSWORD')
-    logging.info(f"Usuário: {usuario}")
-    logging.info(f"Database: {database}")
-    logging.info(f"Host: {host}")
-    logging.info(f"Password: {password}")
-
-# app.register_functions(http_echo_bp)
-# app.register_functions(http_processa_bp)
-# app.register_functions(timer_chama_bp)
-
-# usuario = 'Ana'
-# logging.info(usuario)
+    host = os.getenv("HOST")
+    database = os.getenv("DATABASE")
+    user = os.getenv("USER")
+    password = os.getenv("PASSWORD")
+    
+    conn = (
+        "DRIVER={ODBC Driver 18 for SQL Server};"
+        f"SERVER={host};"
+        f"DATABASE={database};"
+        f"UID={user};"
+        f"PWD={password};"
+        "Encrypt=yes;"
+        "TrustServerCertificate=no;"
+        "Connection Timeout=30;"
+    )
+    
+    #criar conexão com o banco
+    try:
+        cnxn = pyodbc.connect(conn)
+        logging.info("Conexão com o banco de dados estabelecida com sucesso.")
+    except Exception as e:
+        logging.error(f"Erro ao conectar ao banco de dados: {e}")
+        return
+    
+    #fazer um select na tabela  
+    cursor = cnxn.cursor()
+    try:
+        cursor.execute("SELECT * FROM itsm.analista")
+        rows = cursor.fetchall()
+        logging.info(f"Total de registros encontrados: {len(rows)}")
+    except Exception as e:
+        logging.error(f"Erro ao executar a consulta: {e}")
+        return
+    finally:
+        cursor.close()
+        cnxn.close()
+     
+    
