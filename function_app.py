@@ -12,7 +12,7 @@ def extract_chamada(myTimer: func.TimerRequest) -> None:
     host = os.getenv("HOST")
     database = os.getenv("DATABASE")
     user = os.getenv("USER")
-    password = os.getenv("PASSWORD");;
+    password = os.getenv("PASSWORD")
     
     conn = (
         "DRIVER={ODBC Driver 18 for SQL Server};"
