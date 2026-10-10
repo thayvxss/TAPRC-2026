@@ -12,7 +12,7 @@ def extract_chamada(myTimer: func.TimerRequest) -> None:
     host = os.getenv("HOST")
     database = os.getenv("DATABASE")
     user = os.getenv("USER")
-    password = os.getenv("PASSWORD")
+    password = os.getenv("PASSWORD");;
     
     conn = (
         "DRIVER={ODBC Driver 18 for SQL Server};"
@@ -25,7 +25,7 @@ def extract_chamada(myTimer: func.TimerRequest) -> None:
         "Connection Timeout=30;"
     )
     
-    #criar conexão com o banco
+    # criar conexão com o banco
     try:
         cnxn = pyodbc.connect(conn)
         logging.info("Conexão com o banco de dados estabelecida com sucesso.")
@@ -33,7 +33,9 @@ def extract_chamada(myTimer: func.TimerRequest) -> None:
         logging.error(f"Erro ao conectar ao banco de dados: {e}")
         return
     
-    #fazer um select na tabela  
+    # fazer um select na tabela analista, categoria, chamado, chamado_sla, 
+    # chamado_status_historico, cliente_organizacao, csat_avaliacao, fila, 
+    # sla e solicitante.
     cursor = cnxn.cursor()
     try:
         cursor.execute("SELECT * FROM itsm.analista")
