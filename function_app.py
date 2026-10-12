@@ -1,11 +1,17 @@
 import logging
-import azure.functions as func
 import os
+
+import azure.functions as func
 import pyodbc
 
+logger = logging.getLogger("azure_function")
+
 app = func.FunctionApp()
-@app.timer_trigger(schedule="0 * * * * *", arg_name="myTimer", run_on_startup=False,
-              use_monitor=False) 
+
+
+@app.timer_trigger(
+    schedule="0 * * * * *", arg_name="myTimer", run_on_startup=False, use_monitor=False
+)
 def extract_chamada(myTimer: func.TimerRequest) -> None:
 
     host = os.getenv("HOST")
@@ -27,9 +33,9 @@ def extract_chamada(myTimer: func.TimerRequest) -> None:
     # criar conexão com o banco
     try:
         cnxn = pyodbc.connect(conn)
-        logging.info("Conexão com o banco de dados estabelecida com sucesso.")
-    except Exception as e:
-        logging.error(f"Erro ao conectar ao banco de dados: {e}")
+        logger.info("Conexão com o banco de dados estabelecida com sucesso.")
+    except pyodbc.Error as e:
+        logger.error("Erro ao conectar ao banco de dados: %s", e)
         return
 
     # Tabelas que serão consultadas
@@ -43,30 +49,29 @@ def extract_chamada(myTimer: func.TimerRequest) -> None:
         "csat_avaliacao",
         "fila",
         "sla",
-        "solicitante"
+        "solicitante",
     ]
 
     cursor = cnxn.cursor()
 
     try:
         for tabela in tabelas:
-            logging.info(f"Consultando tabela: itsm.{tabela}")
+            logger.info(f"Consultando tabela: itsm.{tabela}")
 
             cursor.execute(f"SELECT * FROM itsm.{tabela}")
             rows = cursor.fetchall()
 
             colunas = [coluna[0] for coluna in cursor.description]
 
-            logging.info(f"Total de registros: {len(rows)}")
+            logger.info(f"Total de registros: {len(rows)}")
 
             for row in rows:
                 resultado = dict(zip(colunas, row))
-                logging.info(f"{tabela}: {resultado}")
+                logger.info(f"{tabela}: {resultado}")
 
-    except Exception as e:
-        logging.error(f"Erro ao executar a consulta: {e}")
+    except pyodbc.Error as e:
+        logger.error("Erro ao consultar a tabela %s: %s", tabela, e)
 
     finally:
         cursor.close()
         cnxn.close()
-        
